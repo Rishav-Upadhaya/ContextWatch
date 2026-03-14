@@ -1,0 +1,191 @@
+{
+  "benchmark_name": "mcp_benchmark",
+  "generated_at_utc": "2026-03-10T11:47:20.163017+00:00",
+  "files": {
+    "logs": "system_test/mcp_benchmark_logs.jsonl",
+    "answer_key": "system_test/mcp_benchmark_answer_key.jsonl"
+  },
+  "totals": {
+    "logs": 617,
+    "expected_anomalies": 34,
+    "predicted_anomalies": 34,
+    "true_positive": 34,
+    "false_positive": 0,
+    "false_negative": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "score": "34/34"
+  },
+  "session_summary": {
+    "mcp-sess-S02": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S03": {
+      "expected": 2,
+      "predicted": 2,
+      "tp": 2,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S04": {
+      "expected": 2,
+      "predicted": 2,
+      "tp": 2,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S05": {
+      "expected": 3,
+      "predicted": 3,
+      "tp": 3,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S06": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S07": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S08": {
+      "expected": 2,
+      "predicted": 2,
+      "tp": 2,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S09": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S10": {
+      "expected": 2,
+      "predicted": 2,
+      "tp": 2,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S11": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S12": {
+      "expected": 10,
+      "predicted": 10,
+      "tp": 10,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S13": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S14": {
+      "expected": 3,
+      "predicted": 3,
+      "tp": 3,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S16": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S17": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S18": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    },
+    "mcp-sess-S19": {
+      "expected": 1,
+      "predicted": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0
+    }
+  },
+  "mismatch_log_ids": {
+    "false_positive": [],
+    "false_negative": []
+  },
+  "promotion_source_breakdown": {
+    "rule_only": 34
+  },
+  "engine_session_summary": {
+    "session_id": "mcp-sess-S15",
+    "total_logs_analysed": 617,
+    "anomalies_found": 34,
+    "anomaly_density_pct": 5.51,
+    "by_type": {
+      "unknown_tool_call": 2,
+      "invalid_tool_parameter": 4,
+      "resource_not_found": 1,
+      "tool_execution_failure": 2,
+      "rate_limit_breach": 1,
+      "upstream_api_failure": 8,
+      "retry_triggered": 2,
+      "auth_failure": 2,
+      "prompt_injection_attempt": 3,
+      "sql_injection_attempt": 1,
+      "latency_spike": 1,
+      "runaway_retry_loop": 4,
+      "input_anomaly": 2,
+      "code_injection_attempt": 1
+    },
+    "by_confidence": {
+      "high": 22,
+      "medium": 1,
+      "low": 11
+    },
+    "by_level": {
+      "error": 18,
+      "warning": 5,
+      "info": 357,
+      "debug": 237
+    },
+    "warning_logs": 5,
+    "error_logs": 18,
+    "non_anomalous_warnings": 0,
+    "non_anomalous_errors": 0,
+    "policy_stats": {
+      "rule_only": 583,
+      "promoted": 34
+    },
+    "highest_risk_finding_id": "722e9cd6-24f8-4b5c-b691-fca835b52d9b",
+    "assessment": "Session shows isolated anomaly patterns with moderate operational risk; targeted remediation is recommended."
+  }
+}

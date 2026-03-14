@@ -1,0 +1,39 @@
+# Project-private deliverables/docs
+ContextWatch_final.pdf
+DEMONSTRATE.md
+PRODUCTION.md
+Resources/
+agent/
+
+# Root data outputs
+data/*
+
+# Python environments
+.venv/
+
+# Editor and local tooling
+.vscode/
+.claude/
+
+# Python cache/test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+contextwatch/.pytest_cache/
+
+# Environment files
+.env
+contextwatch/.env
+contextwatch/docker/.env
+
+# Runtime artifacts
+*.log
+contextwatch/logs/
+
+# Vector DB / generated data stores
+data/chroma_db/
+contextwatch/data/chroma_db/
+contextwatch/data/chroma_db_calibration/
+
+# OS artifacts
+.DS_Store
