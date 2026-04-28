@@ -1,0 +1,369 @@
+"""Automated Report Generation: Create structured, compliance-ready PDF reports.
+
+Generates:
+- Executive summary
+- Evidence chain documentation
+- Causal path visualization (text-based)
+- Mitigation recommendations
+- Judge verdict and confidence scores
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Try to import reportlab for PDF generation; fallback to text
+try:
+    from reportlab.lib.pagesizes import letter  # type: ignore[reportMissingImports]
+    from reportlab.lib import colors  # type: ignore[reportMissingImports]
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore[reportMissingImports]
+    from reportlab.lib.units import inch  # type: ignore[reportMissingImports]
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer  # type: ignore[reportMissingImports]
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
+
+
+class ReportGenerator:
+    """Generate structured RCA reports in PDF and markdown formats."""
+
+    def __init__(self, title: str = "ContextWatch RCA Report"):
+        self.title = title
+        self.created_at = datetime.now(timezone.utc).isoformat()
+        HAS_REPORTLAB
+        self.has_reportlab = HAS_REPORTLAB
+
+    def generate_markdown_report(
+        self,
+        anomaly_id: str,
+        rca_trace: Dict[str, Any],
+        judge_verdict: Optional[Dict[str, Any]] = None,
+        recommendations: Optional[List[str]] = None,
+    ) -> str:
+        """Generate markdown report (universal format).
+        
+        Args:
+            anomaly_id: ID of the anomalous event
+            rca_trace: RCA trace dict with root_cause_id, causal_path, confidence
+            judge_verdict: Judge evaluation result
+            recommendations: Mitigation recommendations
+            
+        Returns:
+            Markdown formatted report as string
+        """
+        md = []
+        md.append("# Root Cause Analysis Report")
+        md.append("")
+        md.append(f"**Generated**: {self.created_at}")
+        md.append(f"**Anomaly ID**: {anomaly_id}")
+        md.append("")
+
+        # Executive Summary
+        md.append("## Executive Summary")
+        root_id = rca_trace.get("root_cause_id", "Unknown")
+        confidence = rca_trace.get("confidence", 0.0)
+        root_type = rca_trace.get("root_cause_type", "Unknown")
+        md.append("")
+        md.append(f"**Root Cause**: {root_type} (ID: `{root_id}`)")
+        md.append(f"**Confidence**: {confidence:.1%} ({confidence:.2f})")
+        md.append(f"**Analysis Date**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        md.append("")
+
+        # Causal Chain
+        md.append("## Causal Chain")
+        md.append("")
+        causal_path = rca_trace.get("causal_path", [])
+        if causal_path:
+            for i, node_id in enumerate(causal_path):
+                prefix = "→ " if i > 0 else ""
+                md.append(f"{prefix}**Step {i+1}**: `{node_id}`")
+            md.append("")
+        else:
+            md.append("No causal chain identified.")
+            md.append("")
+
+        # Validation Notes
+        md.append("## Validation & Evidence")
+        md.append("")
+        validation_notes = rca_trace.get("validation_notes", [])
+        if validation_notes:
+            for note in validation_notes:
+                md.append(f"- {note}")
+        md.append("")
+
+        # Judge Verdict
+        if judge_verdict:
+            md.append("## Quality Assurance (LLM-as-Judge)")
+            md.append("")
+            passed = judge_verdict.get("passed", False)
+            status = "✓ PASSED" if passed else "✗ FAILURES DETECTED"
+            md.append(f"**Verdict**: {status}")
+            md.append(f"**Confidence**: {judge_verdict.get('confidence', 0.0):.1%}")
+            md.append("")
+            if judge_verdict.get("failure_mask"):
+                md.append("**Detected Issues**:")
+                for code in judge_verdict["failure_mask"]:
+                    md.append(f"- {code}: {judge_verdict.get('scored_failures', {}).get(code, 'Unknown')}")
+                md.append("")
+            if judge_verdict.get("notes"):
+                md.append("**Explanation**:")
+                for note in judge_verdict["notes"]:
+                    md.append(f"- {note}")
+                md.append("")
+
+        # Recommendations
+        if recommendations:
+            md.append("## Mitigation Recommendations")
+            md.append("")
+            for i, rec in enumerate(recommendations, 1):
+                md.append(f"**{i}. {rec['title']}**")
+                md.append(f"   {rec.get('description', '')}")
+                md.append(f"   - **Priority**: {rec.get('priority', 'Medium')}")
+                md.append(f"   - **Effort**: {rec.get('effort', 'Unknown')}")
+                md.append("")
+
+        # Footer
+        md.append("---")
+        md.append("*Report generated by ContextWatch v2.0*")
+        md.append("*For operational concerns, escalate to on-call team*")
+
+        return "\n".join(md)
+
+    def generate_pdf_report(
+        self,
+        filename: str,
+        anomaly_id: str,
+        rca_trace: Dict[str, Any],
+        judge_verdict: Optional[Dict[str, Any]] = None,
+        recommendations: Optional[List[str]] = None,
+    ) -> bool:
+        """Generate PDF report using reportlab.
+        
+        Args:
+            filename: Output PDF filename
+            anomaly_id: ID of the anomalous event
+            rca_trace: RCA trace dict
+            judge_verdict: Judge evaluation result
+            recommendations: Mitigation recommendations
+            
+        Returns:
+            True if successful, False if reportlab not available
+        """
+        if not self.has_reportlab:
+            # Fallback: generate markdown
+            md_report = self.generate_markdown_report(
+                anomaly_id=anomaly_id,
+                rca_trace=rca_trace,
+                judge_verdict=judge_verdict,
+                recommendations=recommendations,
+            )
+            with open(filename.replace(".pdf", ".md"), "w") as f:
+                f.write(md_report)
+            logger.info(f"ℹ reportlab not available. Markdown report saved to {filename.replace('.pdf', '.md')}")
+            return False
+
+        try:
+            doc = SimpleDocTemplate(filename, pagesize=letter)
+            styles = getSampleStyleSheet()
+            story = []
+
+            # Title
+            title_style = ParagraphStyle(
+                "CustomTitle",
+                parent=styles["Heading1"],
+                fontSize=24,
+                textColor=colors.HexColor("#2C3E50"),
+                spaceAfter=30,
+            )
+            story.append(Paragraph("Root Cause Analysis Report", title_style))
+            story.append(Spacer(1, 0.2 * inch))
+
+            # Metadata
+            metadata_style = styles["Normal"]
+            story.append(Paragraph(f"<b>Generated</b>: {self.created_at}", metadata_style))
+            story.append(Paragraph(f"<b>Anomaly ID</b>: {anomaly_id}", metadata_style))
+            story.append(Spacer(1, 0.3 * inch))
+
+            # Executive Summary
+            story.append(Paragraph("Executive Summary", styles["Heading2"]))
+            root_id = rca_trace.get("root_cause_id", "Unknown")
+            confidence = rca_trace.get("confidence", 0.0)
+            root_type = rca_trace.get("root_cause_type", "Unknown")
+            summary_text = f"The root cause of this incident is <b>{root_type}</b> (ID: <code>{root_id}</code>) with {confidence:.1%} confidence."
+            story.append(Paragraph(summary_text, metadata_style))
+            story.append(Spacer(1, 0.2 * inch))
+
+            # Causal Chain
+            story.append(Paragraph("Causal Chain", styles["Heading2"]))
+            causal_path = rca_trace.get("causal_path", [])
+            if causal_path:
+                chain_text = " → ".join([f"<code>{node_id}</code>" for node_id in causal_path])
+                story.append(Paragraph(chain_text, metadata_style))
+            else:
+                story.append(Paragraph("No causal chain identified.", metadata_style))
+            story.append(Spacer(1, 0.2 * inch))
+
+            # Judge Verdict
+            if judge_verdict:
+                story.append(Paragraph("Quality Assurance", styles["Heading2"]))
+                passed = judge_verdict.get("passed", False)
+                verdict_color = colors.HexColor("#27AE60") if passed else colors.HexColor("#E74C3C")
+                status = "✓ PASSED" if passed else "✗ FAILURES DETECTED"
+                story.append(
+                    Paragraph(
+                        f"<font color='{verdict_color.hexval()}'><b>{status}</b></font> (Confidence: {judge_verdict.get('confidence', 0.0):.1%})",
+                        metadata_style,
+                    )
+                )
+                if judge_verdict.get("failure_mask"):
+                    failures = ", ".join(judge_verdict["failure_mask"])
+                    story.append(Paragraph(f"<b>Detected Issues</b>: {failures}", metadata_style))
+                story.append(Spacer(1, 0.2 * inch))
+
+            # Recommendations
+            if recommendations:
+                story.append(Paragraph("Mitigation Recommendations", styles["Heading2"]))
+                for i, rec in enumerate(recommendations, 1):
+                    story.append(
+                        Paragraph(
+                            f"<b>{i}. {rec.get('title', 'Recommendation')}</b>",
+                            styles["Heading3"],
+                        )
+                    )
+                    story.append(Paragraph(rec.get("description", ""), metadata_style))
+                    story.append(Spacer(1, 0.1 * inch))
+
+            # Build PDF
+            doc.build(story)
+            logger.info(f"✓ PDF report saved to {filename}")
+            return True
+
+        except (ValueError, IOError, RuntimeError) as e:
+            logger.error(f"✗ PDF generation failed: {e}", exc_info=True)
+            return False
+        except Exception as e:
+            logger.error(f"✗ PDF generation unexpected failure: {e}", exc_info=True)
+            return False
+
+    @staticmethod
+    def get_recommendations(
+        root_cause_type: str,
+        confidence: float,
+    ) -> List[Dict[str, str]]:
+        """Generate mitigation recommendations based on root cause type.
+        
+        Args:
+            root_cause_type: Type of root cause (e.g., "Service", "Database")
+            confidence: Confidence in the diagnosis (0-1)
+            
+        Returns:
+            List of recommendation dicts with title, description, priority, effort
+        """
+        recommendations = []
+
+        if root_cause_type == "Service":
+            recommendations.append({
+                "title": "Restart Service",
+                "description": "Perform controlled restart of the affected service with health checks.",
+                "priority": "High" if confidence > 0.8 else "Medium",
+                "effort": "Low",
+            })
+            recommendations.append({
+                "title": "Review Service Logs",
+                "description": "Deep dive into service logs from 5 minutes before anomaly detection.",
+                "priority": "High",
+                "effort": "Medium",
+            })
+        elif root_cause_type == "Database":
+            recommendations.append({
+                "title": "Check Database Connections",
+                "description": "Verify connection pool saturation and idle connection cleanup.",
+                "priority": "High",
+                "effort": "Low",
+            })
+            recommendations.append({
+                "title": "Analyze Slow Queries",
+                "description": "Review slow query logs and consider index optimization.",
+                "priority": "Medium",
+                "effort": "High",
+            })
+        elif root_cause_type == "Network":
+            recommendations.append({
+                "title": "Check Network Latency",
+                "description": "Measure round-trip latency and packet loss to affected nodes.",
+                "priority": "High",
+                "effort": "Low",
+            })
+
+        # Generic recommendations
+        recommendations.append({
+            "title": "Update Runbook",
+            "description": "Document this incident and add to runbook for future reference.",
+            "priority": "Medium",
+            "effort": "Low",
+        })
+
+        return recommendations
+
+
+def generate_full_report(
+    anomaly_id: str,
+    rca_trace: Dict[str, Any],
+    judge_verdict: Optional[Dict[str, Any]] = None,
+    output_dir: str = "/tmp/contextwatch_reports",
+) -> Dict[str, str]:
+    """Generate both markdown and PDF reports.
+    
+    Args:
+        anomaly_id: Anomaly ID
+        rca_trace: RCA trace
+        judge_verdict: Judge verdict
+        output_dir: Directory to save reports
+        
+    Returns:
+        Dict with paths to generated files
+    """
+    import os
+    os.makedirs(output_dir, exist_ok=True)
+
+    generator = ReportGenerator()
+
+    # Generate recommendations
+    recommendations = ReportGenerator.get_recommendations(
+        root_cause_type=rca_trace.get("root_cause_type", "Unknown"),
+        confidence=rca_trace.get("confidence", 0.0),
+    )
+
+    # Files
+    md_file = f"{output_dir}/{anomaly_id}_report.md"
+    pdf_file = f"{output_dir}/{anomaly_id}_report.pdf"
+
+    # Markdown (always)
+    md_content = generator.generate_markdown_report(
+        anomaly_id=anomaly_id,
+        rca_trace=rca_trace,
+        judge_verdict=judge_verdict,
+        recommendations=recommendations,
+    )
+    with open(md_file, "w") as f:
+        f.write(md_content)
+    logger.info(f"✓ Markdown report: {md_file}")
+
+    # PDF (if reportlab available)
+    success = generator.generate_pdf_report(
+        filename=pdf_file,
+        anomaly_id=anomaly_id,
+        rca_trace=rca_trace,
+        judge_verdict=judge_verdict,
+        recommendations=recommendations,
+    )
+
+    return {
+        "markdown": md_file,
+        "pdf": pdf_file if success else None,
+        "success": success,
+    }

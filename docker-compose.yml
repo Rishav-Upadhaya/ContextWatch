@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-contextwatch}
+      POSTGRES_USER: ${POSTGRES_USER:-contextwatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-contextwatch}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - '8080:8080'
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  contextwatch:
+    build: .
+    ports:
+      - '8000:8000'
+    env_file:
+      - .env
+    environment:
+      - ANOMALY_THRESHOLD=0.20
+      - DATABASE_URL=postgresql://contextwatch:contextwatch@postgres:5432/contextwatch
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=contextwatch
+      - POSTGRES_USER=contextwatch
+      - POSTGRES_PASSWORD=contextwatch
+      - VECTOR_STORE_BACKEND=memory
+    depends_on:
+      - postgres
+    volumes:
+      - ./data:/app/contextwatch/data
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    ports:
+      - '8501:8501'
+    environment:
+      - API_URL=http://contextwatch:8000
+    depends_on:
+      - contextwatch
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+

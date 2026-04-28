@@ -1,0 +1,13 @@
+{
+  "d_model": 256,
+  "n_heads": 4,
+  "d_k": 64,
+  "d_v": 64,
+  "d_ff": 512,
+  "n_layers": 2,
+  "seq_len_max": 128,
+  "vocab_size": 5000,
+  "dropout": 0.1,
+  "learning_rate": 0.001,
+  "mlkp_mask_prob": 0.15
+}

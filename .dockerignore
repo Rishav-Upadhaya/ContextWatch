@@ -1,0 +1,42 @@
+# VCS
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-wheel-metadata/
+*.egg-info/
+dist/
+build/
+
+# Project-specific large/unneeded dirs
+data/
+logs/
+reports/
+*.db
+*.jsonl
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docs (optional keep in production if needed)
+*.md
+!README.md
+
+# Tests (optional – keep if you want to run inside container)
+# tests/
+
+# Misc
+.DS_Store
+temp/
+tmp/
